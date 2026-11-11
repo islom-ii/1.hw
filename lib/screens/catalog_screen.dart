@@ -27,14 +27,24 @@ class _CatalogScreenState extends State<CatalogScreen> {
   late Future<List<Product>> _productsFuture;
   List<Product> _allProducts = [];
   String _query = '';
+  String _selectedCategory = 'Все';
   bool _isSearching = false;
   bool _isGrid = false;
 
+  List<String> get _categories => [
+    'Все',
+    ..._allProducts.map((product) => product.category).toSet(),
+  ];
+
   List<Product> get _filteredProducts {
-    if (_query.isEmpty) return _allProducts;
     final query = _query.toLowerCase();
     return _allProducts
-        .where((product) => product.title.toLowerCase().contains(query))
+        .where(
+          (product) =>
+              (_selectedCategory == 'Все' ||
+                  product.category == _selectedCategory) &&
+              (_query.isEmpty || product.title.toLowerCase().contains(query)),
+        )
         .toList();
   }
 
@@ -72,6 +82,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     setState(() {
       _allProducts.insert(0, product);
       _query = '';
+      _selectedCategory = 'Все';
       _searchController.clear();
       _isSearching = false;
     });
@@ -150,6 +161,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Chip(
+                        label: Text(product.category),
+                        visualDensity: VisualDensity.compact,
                       ),
                       if (product.isUserCreated) ...[
                         const SizedBox(height: 8),
@@ -328,19 +344,68 @@ class _CatalogScreenState extends State<CatalogScreen> {
           }
 
           final products = _filteredProducts;
-          if (products.isEmpty) {
-            return Center(
-              child: Text(
-                _allProducts.isEmpty
-                    ? 'Товары не найдены'
-                    : 'По запросу ничего не найдено',
+          return Column(
+            children: [
+              SizedBox(
+                height: 60,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
+                  ),
+                  children: _categories.map((category) {
+                    final isSelected = _selectedCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(category),
+                        selected: isSelected,
+                        selectedColor: Colors.deepPurple.shade100,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? Colors.deepPurple.shade900
+                              : Colors.black,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) {
+                          setState(() => _selectedCategory = category);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: _refreshProducts,
-            child: _isGrid ? _buildGrid(products) : _buildList(products),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _refreshProducts,
+                  child: products.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: 240,
+                              child: Center(
+                                child: Text(
+                                  _allProducts.isEmpty
+                                      ? 'Товары не найдены'
+                                      : _query.isNotEmpty
+                                      ? 'По запросу ничего не найдено'
+                                      : 'В этой категории нет товаров',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : _isGrid
+                      ? _buildGrid(products)
+                      : _buildList(products),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -356,6 +421,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   Widget _buildGrid(List<Product> products) {
     return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -431,6 +497,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   Widget _buildList(List<Product> products) {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];

@@ -5,6 +5,7 @@ class Product {
     required this.description,
     required this.price,
     required this.imageUrl,
+    this.category = 'Разное',
     this.isUserCreated = false,
     this.colors = const ['Черный', 'Белый', 'Синий'],
     this.sizes = const ['S', 'M', 'L', 'XL'],
@@ -15,6 +16,7 @@ class Product {
   final String description;
   final double price;
   final String imageUrl;
+  final String category;
   final bool isUserCreated;
   final List<String> colors;
   final List<String> sizes;
@@ -25,6 +27,7 @@ class Product {
     final description = json['description'];
     final price = json['price'];
     final image = json['image'] ?? json['thumbnail'];
+    final category = json['category'];
 
     if (id == null ||
         title is! String ||
@@ -40,6 +43,9 @@ class Product {
       description: description,
       price: price.toDouble(),
       imageUrl: image,
+      category: category is String && category.trim().isNotEmpty
+          ? category
+          : 'Разное',
     );
   }
 
@@ -51,11 +57,7 @@ class Product {
 }
 
 class CartItem {
-  const CartItem({
-    required this.product,
-    this.color,
-    this.size,
-  });
+  const CartItem({required this.product, this.color, this.size});
 
   final Product product;
   final String? color;

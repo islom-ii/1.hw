@@ -10,11 +10,20 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
+  static const _categories = [
+    'Обувь',
+    'Электроника',
+    'Аксессуары',
+    'Одежда',
+    'Разное',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _imageController = TextEditingController();
+  String _category = 'Разное';
 
   @override
   void dispose() {
@@ -37,6 +46,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       imageUrl: imageUrl.isEmpty
           ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30'
           : imageUrl,
+      category: _category,
       isUserCreated: true,
     );
 
@@ -100,6 +110,24 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     return 'Введите корректную ссылку http или https';
                   }
                   return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                initialValue: _category,
+                decoration: const InputDecoration(labelText: 'Категория'),
+                items: _categories
+                    .map(
+                      (category) => DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (category) {
+                  if (category != null) {
+                    setState(() => _category = category);
+                  }
                 },
               ),
               const SizedBox(height: 10),
